@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HiPass 영수증 자동수집</title>
+  <title>HiPass 영수증</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="/static/style.css" />
@@ -13,69 +16,95 @@
 
 <div class="container">
 
-<header>
-  <div class="header-title">
-    <span class="header-dot"></span>
-    <h1>HiPass 영수증 자동수집</h1>
-  </div>
-  <div id="header-actions">
-    <button id="delete-all-btn" onclick="deleteAllScreenshots()">전체 삭제</button>
-    <button id="refresh-btn" onclick="startRefresh()">전체 새로고침</button>
-  </div>
-</header>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="34" height="34" rx="8" fill="#F5C518"/>
+          <rect x="10" y="7" width="3.5" height="20" rx="1.75" fill="#0B0D12"/>
+          <rect x="20.5" y="7" width="3.5" height="20" rx="1.75" fill="#0B0D12"/>
+          <rect x="15.25" y="8" width="3.5" height="4.5" rx="1" fill="#0B0D12"/>
+          <rect x="15.25" y="14.75" width="3.5" height="4.5" rx="1" fill="#0B0D12"/>
+          <rect x="15.25" y="21.5" width="3.5" height="4.5" rx="1" fill="#0B0D12"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">HIPASS</span>
+        <span class="brand-sub">영수증 자동수집 시스템</span>
+      </div>
+    </div>
+    <div id="header-actions">
+      <button id="delete-all-btn" onclick="deleteAllScreenshots()">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1z"/></svg>
+        전체 삭제
+      </button>
+      <button id="refresh-btn" onclick="startRefresh()">
+        <svg id="refresh-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" /></svg>
+        전체 캡처
+      </button>
+    </div>
+  </header>
 
-<div id="status-bar" class="hidden">
-  <div id="status-top">
-    <span id="status-icon"></span>
-    <span id="status-text"></span>
+  <div id="status-bar" class="hidden">
+    <div id="status-top">
+      <span id="status-icon"></span>
+      <span id="status-text"></span>
+    </div>
+    <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
   </div>
-  <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
-</div>
 
-<table>
-  <thead>
-    <tr>
-      <th>날짜</th>
-      <th>미리보기</th>
-      <th>다운로드</th>
-    </tr>
-  </thead>
-  <tbody id="screenshot-tbody">
+  <div id="cards-grid">
     {% for item in screenshots %}
-    <tr>
-      <td class="date-cell" data-date="{{ item.date }}">{{ item.date }}</td>
-      <td>
+    <div class="day-card {{ 'has-capture' if item.exists else 'no-capture' }}" style="animation-delay:{{ loop.index0 * 40 }}ms">
+      <div class="card-date-col">
+        <span class="card-date">{{ item.date }}</span>
+        <span class="card-dayname" data-date="{{ item.date }}"></span>
+      </div>
+      <div class="card-status-col">
+        {% if item.exists %}
+          <span class="status-pip green"></span>
+          <span class="status-word captured">캡처됨</span>
+        {% else %}
+          <span class="status-pip dim"></span>
+          <span class="status-word empty-label">기록 없음</span>
+        {% endif %}
+      </div>
+      <div class="card-actions-col">
         {% if item.exists %}
           <button class="preview-btn" onclick="openModal('/screenshots/{{ item.filename }}')">미리보기</button>
-        {% else %}
-          <span class="empty-label">기록 없음</span>
+          <a class="dl-btn" href="/screenshots/{{ item.filename }}" download="{{ item.filename }}">저장</a>
         {% endif %}
-      </td>
-      <td>
-        {% if item.exists %}
-          <a class="dl-btn" href="/screenshots/{{ item.filename }}" download="{{ item.filename }}">다운로드</a>
-        {% endif %}
-      </td>
-    </tr>
+        <button class="capture-icon-btn" data-date="{{ item.date }}"
+                onclick="startDateCapture('{{ item.date }}')" title="{{ item.date }} 재캡처">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+            <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
     {% endfor %}
-  </tbody>
-</table>
+  </div>
 
-<details id="log-details">
-  <summary>캡처 로그</summary>
-  <table class="log-table">
-    <thead>
-      <tr><th>날짜</th><th>상태</th><th>메시지</th><th>시각</th></tr>
-    </thead>
-    <tbody id="log-tbody">
-      <tr><td colspan="4" class="log-empty">불러오는 중...</td></tr>
-    </tbody>
-  </table>
-</details>
+  <details id="log-details">
+    <summary>
+      <span class="summary-arrow">▸</span>
+      <span>캡처 로그</span>
+    </summary>
+    <div class="log-terminal">
+      <table class="log-table">
+        <thead>
+          <tr><th>날짜</th><th>상태</th><th>메시지</th><th>시각</th></tr>
+        </thead>
+        <tbody id="log-tbody">
+          <tr><td colspan="4" class="log-empty">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
 
-</div><!-- /.container -->
+</div>
 
-<!-- Image modal -->
+<!-- Modal -->
 <div id="modal-overlay" onclick="closeModal()">
   <div id="modal-box" onclick="event.stopPropagation()">
     <img id="modal-img" src="" alt="" />
@@ -89,13 +118,17 @@ let _hideTimer = null;
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-const CAPTURE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-  <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
-</svg>`;
+const CAPTURE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" /></svg>`;
 
-function getCaptureIconHTML(dateStr) {
-  return `<button class="capture-icon-btn" data-date="${dateStr}" onclick="startDateCapture('${dateStr}')" title="${dateStr} 재캡처">${CAPTURE_ICON_SVG}</button>`;
-}
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.card-dayname[data-date]').forEach(el => {
+    const d = new Date(el.dataset.date + 'T00:00:00');
+    const day = d.getDay();
+    el.textContent = DAYS[day];
+    if (day === 0 || day === 6) el.classList.add('weekend');
+  });
+  reloadLogs();
+});
 
 function setAllCaptureIconsDisabled(disabled) {
   document.querySelectorAll('.capture-icon-btn').forEach(btn => { btn.disabled = disabled; });
@@ -107,22 +140,6 @@ function setDateIconSpinning(dateStr, spinning) {
   const svg = btn.querySelector('svg');
   if (svg) svg.classList.toggle('spinning', spinning);
 }
-
-function formatDateHTML(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const day = d.getDay();
-  const label = DAYS[day];
-  const isWeekend = day === 0 || day === 6;
-  return `${dateStr} <span class="day-label${isWeekend ? ' weekend' : ''}">(${label})</span>`;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.date-cell[data-date]').forEach(td => {
-    const dateStr = td.dataset.date;
-    td.innerHTML = formatDateHTML(dateStr) + getCaptureIconHTML(dateStr);
-  });
-  reloadLogs();
-});
 
 function openModal(src) {
   document.getElementById('modal-img').src = src;
@@ -223,26 +240,42 @@ function pollStatus(job_id, btnsToRestore, spinningDateStr) {
   }, 1500);
 }
 
+function buildCard(item, index) {
+  const d = new Date(item.date + 'T00:00:00');
+  const day = d.getDay();
+  const dayLabel = DAYS[day];
+  const isWeekend = day === 0 || day === 6;
+  const dayClass = isWeekend ? ' weekend' : '';
+
+  const statusHTML = item.exists
+    ? `<span class="status-pip green"></span><span class="status-word captured">캡처됨</span>`
+    : `<span class="status-pip dim"></span><span class="status-word empty-label">기록 없음</span>`;
+
+  const actionBtns = item.exists
+    ? `<button class="preview-btn" onclick="openModal('/screenshots/${item.filename}')">미리보기</button>
+       <a class="dl-btn" href="/screenshots/${item.filename}" download="${item.filename}">저장</a>`
+    : '';
+
+  return `<div class="day-card ${item.exists ? 'has-capture' : 'no-capture'}" style="animation-delay:${index * 35}ms">
+    <div class="card-date-col">
+      <span class="card-date">${item.date}</span>
+      <span class="card-dayname${dayClass}">${dayLabel}</span>
+    </div>
+    <div class="card-status-col">${statusHTML}</div>
+    <div class="card-actions-col">
+      ${actionBtns}
+      <button class="capture-icon-btn" data-date="${item.date}"
+              onclick="startDateCapture('${item.date}')" title="${item.date} 재캡처">
+        ${CAPTURE_SVG}
+      </button>
+    </div>
+  </div>`;
+}
+
 async function reloadTable() {
   const res = await fetch('/api/screenshots');
   const list = await res.json();
-  const tbody = document.getElementById('screenshot-tbody');
-  tbody.innerHTML = list.map(item => {
-    const dateHTML = formatDateHTML(item.date);
-    const iconHTML = getCaptureIconHTML(item.date);
-    if (item.exists) {
-      return `<tr>
-        <td class="date-cell">${dateHTML}${iconHTML}</td>
-        <td><button class="preview-btn" onclick="openModal('/screenshots/${item.filename}')">미리보기</button></td>
-        <td><a class="dl-btn" href="/screenshots/${item.filename}" download="${item.filename}">다운로드</a></td>
-      </tr>`;
-    }
-    return `<tr>
-      <td class="date-cell">${dateHTML}${iconHTML}</td>
-      <td><span class="empty-label">기록 없음</span></td>
-      <td></td>
-    </tr>`;
-  }).join('');
+  document.getElementById('cards-grid').innerHTML = list.map((item, i) => buildCard(item, i)).join('');
 }
 
 async function reloadLogs() {
@@ -254,7 +287,7 @@ async function reloadLogs() {
     return;
   }
   const cls   = { success: 'status-success', empty: 'status-empty', error: 'status-error', skipped: 'status-skipped' };
-  const label = { success: '✓ 성공', empty: '— 기록 없음', error: '✗ 오류', skipped: '↩ 스킵' };
+  const label = { success: '✓ 성공', empty: '— 없음', error: '✗ 오류', skipped: '↩ 스킵' };
   tbody.innerHTML = logs.map(l => `<tr>
     <td>${l.date}</td>
     <td class="${cls[l.status] || ''}">${label[l.status] || l.status}</td>
